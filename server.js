@@ -8,27 +8,28 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
+// Enable CORS for all origins
 app.use(cors());
 app.use(express.json());
 
-
+// Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir);
 }
 
-
+// Configure multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, 'uploads/');
     },
     filename: (req, file, cb) => {
-        
+        // Use original filename as is
         cb(null, file.originalname);
     }
 });
 
-
+// File filter to accept only SVG files
 const fileFilter = (req, file, cb) => {
     if (file.mimetype === 'image/svg+xml' || file.originalname.toLowerCase().endsWith('.svg')) {
         cb(null, true);
@@ -41,13 +42,16 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024 
+        fileSize: 5 * 1024 * 1024 // 5MB limit
     }
 });
 
-
+// Serve static files from uploads directory
 app.use('/images', express.static(path.join(__dirname, 'uploads')));
 
+// Routes
+
+// Root route - API info
 app.get('/', (req, res) => {
     res.json({
         message: 'SVG Images API Service',
@@ -61,7 +65,7 @@ app.get('/', (req, res) => {
     });
 });
 
-
+// Upload SVG image
 app.post('/upload', upload.single('image'), (req, res) => {
     try {
         if (!req.file) {
@@ -93,7 +97,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
     }
 });
 
-
+// List all uploaded images
 app.get('/images/list', (req, res) => {
     try {
         const files = fs.readdirSync(uploadsDir);
@@ -127,7 +131,7 @@ app.get('/images/list', (req, res) => {
     }
 });
 
-
+// Fetch specific image info
 app.get('/api/images/:filename', (req, res) => {
     try {
         const filename = req.params.filename;
@@ -162,7 +166,7 @@ app.get('/api/images/:filename', (req, res) => {
     }
 });
 
-
+// Delete image
 app.delete('/images/:filename', (req, res) => {
     try {
         const filename = req.params.filename;
@@ -190,6 +194,7 @@ app.delete('/images/:filename', (req, res) => {
     }
 });
 
+// Error handling middleware
 app.use((error, req, res, next) => {
     if (error instanceof multer.MulterError) {
         if (error.code === 'LIMIT_FILE_SIZE') {
@@ -206,7 +211,7 @@ app.use((error, req, res, next) => {
     });
 });
 
-
+// Start server
 app.listen(PORT, HOST, () => {
     console.log(`🚀 SVG Images API Server running on http://${HOST}:${PORT}`);
     console.log(`📁 Upload directory: ${uploadsDir}`);
