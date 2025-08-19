@@ -43,7 +43,7 @@ Upload an SVG file to the server.
 
 **Form Data:**
 
-- `imag`: SVG file
+- `image`: SVG file
 
 **Example using curl:**
 
